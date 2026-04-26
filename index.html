@@ -882,6 +882,18 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
 .cdp-today-btn:hover{background:var(--acc3)}
 .cdp-clear-btn{color:var(--ink4)}
 .cdp-clear-btn:hover{color:var(--rose);background:var(--bg2)}
+
+/* ══ GOOGLE DRIVE SETUP ══ */
+.gdrive-setup{border-top:1px solid var(--bdr);margin-top:1.2rem;padding-top:1rem}
+.gdrive-title{font-family:'Oranienbaum',serif;font-size:1rem;color:var(--ink);letter-spacing:1px;margin-bottom:0.6rem}
+.gdrive-status{font-size:0.82rem;color:var(--sage);font-family:'Vollkorn',serif;margin-bottom:0.5rem;font-style:italic;min-height:1.2rem}
+.gdrive-input-row{display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;margin-top:0.5rem}
+.gdrive-inp{flex:1;min-width:200px;border:1.5px solid var(--bdr2);background:var(--su2);color:var(--ink);padding:0.38rem 0.7rem;border-radius:10px;font-size:0.78rem;font-family:'Vollkorn',serif;outline:none;transition:border-color 0.2s}
+.gdrive-inp:focus{border-color:var(--acc2)}
+.gdrive-btn{background:var(--acc);color:#fff;border:none;padding:0.38rem 0.9rem;border-radius:10px;font-family:'Oranienbaum',serif;font-size:0.85rem;cursor:pointer;white-space:nowrap;transition:all 0.2s}
+.gdrive-btn:hover{background:var(--acc2)}
+.gdrive-clear{background:transparent;border:none;color:var(--rose);font-size:0.75rem;font-family:'Vollkorn',serif;cursor:pointer;margin-top:0.5rem;padding:0.2rem 0;text-decoration:underline}
+.gdrive-clear:hover{opacity:0.75}
 </style>
 </head>
 <body class="tb">
@@ -1194,6 +1206,18 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
     <div class="modeRow">
       <div class="mopt on" onclick="setMode('l')" id="mo-l">☀️ Light</div>
       <div class="mopt" onclick="setMode('d')" id="mo-d">🌙 Dark</div>
+    </div>
+    <!-- Google Drive Setup -->
+    <div class="gdrive-setup">
+      <h4 class="gdrive-title">☁ Google Drive Sync</h4>
+      <div id="gdriveStatus" class="gdrive-status"></div>
+      <div class="gdrive-steps" id="gdriveSteps">
+        <div class="gdrive-input-row">
+          <input type="text" id="cidInput" class="gdrive-inp" placeholder="Paste your Client ID here…" value="">
+          <button class="gdrive-btn" onclick="saveClientId()">Connect ✦</button>
+        </div>
+        <button class="gdrive-clear" onclick="clearClientId()" id="gdriveClear" style="display:none">Disconnect Drive</button>
+      </div>
     </div>
     <button class="thClose" onclick="closeThMod()">Done ✦</button>
   </div>
@@ -1955,6 +1979,46 @@ document.addEventListener('click',function(e){
   setTimeout(initCDPs,500);
   window.initCDPs=initCDPs;
 })();
+
+
+function saveClientId(){
+  const cid=(document.getElementById('cidInput')?.value||'').trim();
+  if(!cid||!cid.includes('.apps.googleusercontent.com')){
+    alert('Please paste a valid Google OAuth Client ID (should end with .apps.googleusercontent.com)');
+    return;
+  }
+  localStorage.setItem('jnl_client_id',cid);
+  S.useGDrive=true;
+  document.getElementById('gdriveStatus').textContent='✦ Connected! Reload the app to start syncing.';
+  document.getElementById('gdriveStatus').style.color='var(--sage)';
+  document.getElementById('gdriveClear').style.display='block';
+  initGapi(cid);
+}
+function clearClientId(){
+  if(!confirm('Disconnect Google Drive? Your local data stays safe.'))return;
+  localStorage.removeItem('jnl_client_id');
+  S.useGDrive=false;
+  document.getElementById('gdriveStatus').textContent='Drive disconnected.';
+  document.getElementById('gdriveClear').style.display='none';
+  document.getElementById('cidInput').value='';
+}
+function updateDriveSetupUI(){
+  const cid=localStorage.getItem('jnl_client_id')||'';
+  const inp=document.getElementById('cidInput');
+  const clear=document.getElementById('gdriveClear');
+  const status=document.getElementById('gdriveStatus');
+  if(!inp)return;
+  if(cid){
+    inp.value=cid;
+    if(clear)clear.style.display='block';
+    if(status){status.textContent='✦ Google Drive connected';status.style.color='var(--sage)';}
+  }else{
+    if(status){status.textContent='Not connected — entries save locally only';}
+  }
+}
+// Update UI when theme modal opens
+const _origOpenThMod=openThMod;
+openThMod=function(){_origOpenThMod();setTimeout(updateDriveSetupUI,50);};
 
 // ── STARTUP ──
 loadPrefs();
