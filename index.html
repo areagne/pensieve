@@ -949,6 +949,24 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
 .gdrive-btn:hover{background:var(--acc2)}
 .gdrive-clear{background:transparent;border:none;color:var(--rose);font-size:0.75rem;font-family:'Vollkorn',serif;cursor:pointer;margin-top:0.5rem;padding:0.2rem 0;text-decoration:underline}
 .gdrive-clear:hover{opacity:0.75}
+
+.jtag-sel{
+  border:1.5px dashed var(--bdr2);
+  background:transparent;
+  color:var(--ink3);
+  padding:0.22rem 0.7rem;
+  border-radius:20px;
+  font-family:'Vollkorn',serif;
+  font-size:0.78rem;
+  cursor:pointer;
+  outline:none;
+  transition:all 0.2s;
+  max-width:160px;
+  -webkit-appearance:none;
+  appearance:none;
+}
+.jtag-sel:focus{border-color:var(--acc2);border-style:solid;color:var(--acc)}
+.jtag-sel:hover{border-color:var(--acc2);color:var(--acc)}
 </style>
 </head>
 <body class="tb">
@@ -1063,13 +1081,10 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
           <div class="jtag-strip" id="jTagStrip">
             <div class="trow" id="jTrow" style="margin-bottom:0;flex:1"></div>
             <div class="jtag-add-wrap" id="jtagAddWrap">
-              <button class="jtag-plus" onclick="toggleTagPicker()" title="Add tag from list">+</button>
+              <select class="jtag-sel" id="jTsel" onchange="selTag('j')">
+                <option value="">+ Add tag…</option>
+              </select>
               <button class="tadd" onclick="openTgMod('j')" title="Create new tag">New</button>
-              <div class="jtag-picker" id="jtagPicker" style="display:none">
-                <select class="tsel-inline" id="jTsel" onchange="selTag('j');closeTagPicker()">
-                  <option value="">Select tag…</option>
-                </select>
-              </div>
             </div>
           </div>
 
@@ -1774,49 +1789,9 @@ const _origSetDT=setDT;
 setDT=function(t){_origSetDT(t);renderDayStrip()};
 
 
-function toggleTagPicker(){
-  const p=document.getElementById('jtagPicker');
-  const btn=document.querySelector('.jtag-plus');
-  if(!p)return;
-  const open=p.style.display==='none'||!p.style.display;
-  if(!open){closeTagPicker();return;}
-  // Populate first
-  const sel=document.getElementById('jTsel');
-  if(sel){
-    sel.innerHTML='<option value="">Select tag…</option>';
-    S.jTags.filter(t=>!S.selJT.includes(t.id)).forEach(t=>{
-      const o=document.createElement('option');o.value=t.id;o.textContent=t.name;sel.appendChild(o);
-    });
-  }
-  p.style.display='flex';
-  // Position: calculate after display:flex so dimensions are known
-  if(btn){
-    const r=btn.getBoundingClientRect();
-    const pw=Math.max(200,p.offsetWidth||200);
-    const ph=p.offsetHeight||60;
-    const vw=window.innerWidth;
-    const vh=window.innerHeight;
-    // Horizontal: align right edge of picker to button, but stay on screen
-    let left=r.right-pw;
-    if(left<8)left=8;
-    if(left+pw>vw-8)left=vw-pw-8;
-    // Vertical: prefer below, flip above if not enough room
-    let top=r.bottom+6;
-    if(top+ph>vh-80)top=r.top-ph-6; // 80px = nav bar buffer
-    if(top<8)top=8;
-    p.style.top=top+'px';
-    p.style.left=left+'px';
-  }
-  setTimeout(()=>document.addEventListener('click',closeTagPickerOut,{once:true}),50);
-}
-function closeTagPicker(){
-  const p=document.getElementById('jtagPicker');
-  if(p)p.style.display='none';
-}
-function closeTagPickerOut(e){
-  const w=document.getElementById('jtagAddWrap');
-  if(w&&!w.contains(e.target))closeTagPicker();
-}
+
+
+
 
 
 // ── DREAMS ──
@@ -2428,6 +2403,7 @@ if(isUnlocked&&!wasLocked){
       <button onclick="showDriveStatus()" style="background:var(--bg2);color:var(--ink);border:1px solid var(--bdr);padding:0.4rem 0.9rem;border-radius:8px;font-family:'Oranienbaum',serif;cursor:pointer">↺ Refresh</button>
     </div>
   </div>
+</div>
 </div>
 </body>
 </html>
