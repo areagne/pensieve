@@ -1232,6 +1232,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
 </div>
 
 <script src="https://apis.google.com/js/api.js"></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <script>
 // QUOTE ROTATION
 const QUOTES=["I declare after all there is no enjoyment like reading!", "The person who has not pleasure in a good novel must be intolerably stupid.", "To be fond of dancing was a certain step towards falling in love.", "One half of the world cannot understand the pleasures of the other.", "My idea of good company is the company of clever, well-informed people.", "I may have lost my heart, but not my self-control.", "There is no charm equal to tenderness of heart.", "Silly things do cease to be silly if they are done by sensible people.", "It is not what we say or think that defines us, but what we do.", "Happiness in marriage is entirely a matter of chance.", "A large income is the best recipe for happiness I ever heard of.", "Do not give way to useless alarm; though it is right to be prepared for the worst.", "It is a truth universally acknowledged that a single man in possession of a good fortune must be in want of a wife.", "We are all fools in love.", "Indulge your imagination in every possible flight.", "A woman must have a thorough knowledge of music, singing, drawing, dancing and the modern languages.", "There is nothing like staying at home for real comfort.", "I wish as well as everybody else to be perfectly happy; but, like everybody else, it must be in my own way."];
@@ -1284,7 +1285,7 @@ function setSS(st,l){
   // Also update mobile header if visible
   console.log('[Drive]',st,l);
 }
-function initGapi(cid){gapi.load('client',async()=>{await gapi.client.init({discoveryDocs:['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest']});tokenClient=google.accounts.oauth2.initTokenClient({client_id:cid,scope:SCOPES,callback:resp=>{if(!resp.error){accessToken=resp.access_token;gapi.client.setToken({access_token:accessToken});driveLoad()}}})})}
+function initGapi(cid){gapi.load('client',async()=>{try{await gapi.client.init({discoveryDocs:['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest']});}catch(e){console.error('gapi init error:',e);setSS('er','Drive init failed');return;}tokenClient=google.accounts.oauth2.initTokenClient({client_id:cid,scope:SCOPES,callback:resp=>{if(resp.error){console.error('OAuth error:',resp.error,resp.error_description);setSS('er','Auth failed: '+resp.error);alert('Google auth failed: '+resp.error+'. Check your OAuth setup.');}else{accessToken=resp.access_token;gapi.client.setToken({access_token:accessToken});driveLoad();}}})})}
 async function driveLoad(){
   if(!S.useGDrive||!accessToken){loadBackup();return}
   setSS('sy','Loading…');document.getElementById('lkSync').textContent='Loading from Google Drive…';
@@ -1334,7 +1335,7 @@ function unlock(){
     const tryAuth=()=>{
       if(tokenClient){
         document.getElementById('lkSync').textContent='Connecting to Drive…';
-        tokenClient.requestAccessToken({prompt:''});
+        tokenClient.requestAccessToken({prompt:'select_account'});
       } else {
         // gapi still loading - retry
         setTimeout(tryAuth, 300);
@@ -2100,16 +2101,26 @@ function showDriveStatus(){
   if(!body)return;
   const cid=localStorage.getItem('jnl_client_id')||'None';
   const lines=[
-    '<b>Client ID:</b> '+(cid?cid.substring(0,30)+'…':'❌ Not set'),
+    '<b>Client ID:</b> '+(cid?'✅ '+cid.substring(0,35)+'…':'❌ Not set - go to Theme → Drive'),
     '<b>Drive enabled:</b> '+(S.useGDrive?'✅ Yes':'❌ No'),
-    '<b>Access token:</b> '+(accessToken?'✅ Present':'❌ Missing - not authenticated'),
-    '<b>File ID:</b> '+(S.driveFileId||'None - file not yet created'),
-    '<b>Local entries:</b> '+Object.keys(S.je).length+' days',
-    '<b>Local tags:</b> '+S.jTags.length,
-    '<b>Last backup:</b> '+(()=>{try{const d=JSON.parse(localStorage.getItem("jnl_backup")||"{}");return d.savedAt||"Never";}catch(e){return "Error";}})(),
+    '<b>Token client ready:</b> '+(tokenClient?'✅ Yes':'❌ No - gapi not loaded yet'),
+    '<b>Access token:</b> '+(accessToken?'✅ Present (authenticated)':'❌ Missing - click Test Auth below'),
+    '<b>File ID in Drive:</b> '+(S.driveFileId?'✅ '+S.driveFileId:'None yet'),
+    '<b>Local entries:</b> '+Object.keys(S.je).length+' journal days, '+S.jTags.length+' tags',
+    '<b>GSI script loaded:</b> '+(typeof google!=='undefined'&&google.accounts?'✅ Yes':'❌ No - check network'),
+    '<b>GAPI loaded:</b> '+(typeof gapi!=='undefined'&&gapi.client?'✅ Yes':'❌ No'),
+    '<b>Last save:</b> '+(()=>{try{const d=JSON.parse(localStorage.getItem("jnl_backup")||"{}");return d.savedAt?new Date(d.savedAt).toLocaleString():"Never";}catch(e){return "Error";}})(),
   ];
   body.innerHTML=lines.join('<br>');
   document.getElementById('driveDbgOv').style.display='flex';
+}
+function testAuth(){
+  const body=document.getElementById('driveDbgBody');
+  if(!tokenClient){body.innerHTML='<span style="color:var(--rose)">❌ tokenClient not ready. Wait a moment and try again, or check your Client ID.</span>';return;}
+  body.innerHTML='Opening Google auth… (allow popups if prompted)';
+  try{
+    tokenClient.requestAccessToken({prompt:'select_account'});
+  }catch(e){body.innerHTML='<span style="color:var(--rose)">❌ Error: '+e.message+'</span>';}
 }
 async function forceDriveSync(){
   const body=document.getElementById('driveDbgBody');
@@ -2344,9 +2355,10 @@ if(isUnlocked&&!wasLocked){
     </div>
     <div id="driveDbgBody" style="font-family:'Vollkorn',serif;font-size:0.85rem;color:var(--ink3);line-height:1.8"></div>
     <div style="display:flex;gap:0.5rem;margin-top:1rem;flex-wrap:wrap">
-      <button onclick="forceDriveSync()" style="background:var(--acc);color:#fff;border:none;padding:0.4rem 0.9rem;border-radius:8px;font-family:'Oranienbaum',serif;cursor:pointer">Force Save to Drive</button>
-      <button onclick="forceReload()" style="background:var(--bg2);color:var(--ink);border:1px solid var(--bdr);padding:0.4rem 0.9rem;border-radius:8px;font-family:'Oranienbaum',serif;cursor:pointer">Reload from Drive</button>
-      <button onclick="document.getElementById('driveDbgOv').style.display='none'" style="background:transparent;border:1px solid var(--bdr);color:var(--ink4);padding:0.4rem 0.9rem;border-radius:8px;font-family:'Oranienbaum',serif;cursor:pointer">Close</button>
+      <button onclick="testAuth()" style="background:var(--acc);color:#fff;border:none;padding:0.4rem 0.9rem;border-radius:8px;font-family:'Oranienbaum',serif;cursor:pointer">🔑 Authenticate</button>
+      <button onclick="forceDriveSync()" style="background:var(--sage);color:#fff;border:none;padding:0.4rem 0.9rem;border-radius:8px;font-family:'Oranienbaum',serif;cursor:pointer">💾 Force Save</button>
+      <button onclick="forceReload()" style="background:var(--bg2);color:var(--ink);border:1px solid var(--bdr);padding:0.4rem 0.9rem;border-radius:8px;font-family:'Oranienbaum',serif;cursor:pointer">↻ Reload</button>
+      <button onclick="showDriveStatus()" style="background:var(--bg2);color:var(--ink);border:1px solid var(--bdr);padding:0.4rem 0.9rem;border-radius:8px;font-family:'Oranienbaum',serif;cursor:pointer">↺ Refresh</button>
     </div>
   </div>
 </div>
