@@ -686,7 +686,6 @@ input[type="date"]{color-scheme:light}
   /* Sounds bar */
   .amb{bottom:60px!important;z-index:500!important}
   /* Calendar toggle */
-  .cal-mob-toggle{display:flex!important;bottom:64px}
 }
 
 /* Mobile bottom nav - separate element, always fixed */
@@ -1385,8 +1384,8 @@ function loadJE(key){const e=S.je[key];S.mood=null;S.dayType=null;S.selJT=[];for
 // CALENDAR
 function planDays(){const s=new Set();S.plans.forEach(p=>{let d=new Date(p.start+'T12:00:00');const end=new Date((p.end||p.start)+'T12:00:00');while(d<=end){s.add(d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()));d.setDate(d.getDate()+1)}});return s}
 function renderCal(){const ms=['January','February','March','April','May','June','July','August','September','October','November','December'];const mye=document.getElementById('calMY');if(mye)mye.textContent=ms[S.calM]+' '+S.calY;const c=document.getElementById('calDays');if(!c)return;c.innerHTML='';const rawFirst=new Date(S.calY,S.calM,1).getDay();const first=(rawFirst+6)%7;const days=new Date(S.calY,S.calM+1,0).getDate(),today=todayKey(),pd=planDays();for(let i=0;i<first;i++){const el=document.createElement('div');el.className='cd empty';c.appendChild(el)}for(let d=1;d<=days;d++){const key=S.calY+'-'+pad(S.calM+1)+'-'+pad(d);const el=document.createElement('div');el.className='cd';el.textContent=d;if(key===today)el.classList.add('today');if(S.je[key])el.classList.add('has-e');if(pd.has(key))el.classList.add('has-p');if(key===S.selDate)el.classList.add('sel');el.onclick=()=>selectDate(key);c.appendChild(el)}}
-function prevM(){S.calM--;if(S.calM<0){S.calM=11;S.calY--}renderCal()}
-function nextM(){S.calM++;if(S.calM>11){S.calM=0;S.calY++}renderCal()}
+function prevM(){S.calM--;if(S.calM<0){S.calM=11;S.calY--}renderCal();if(document.getElementById('mobCalPanel')?.style.display!=='none')renderMobCal();}
+function nextM(){S.calM++;if(S.calM>11){S.calM=0;S.calY++}renderCal();if(document.getElementById('mobCalPanel')?.style.display!=='none')renderMobCal();}
 function selectDate(key){S.selDate=key;setupDH(key);loadJE(key);renderCal();if(S.view!=='j')switchTab('j')}
 
 // STATS
@@ -1812,17 +1811,50 @@ async function deleteDream(){
 
 // ── MOBILE ──
 function toggleMobileCal(){
-  const sb=document.querySelector('.sb-right');
-  if(!sb)return;
-  const opening=!sb.classList.contains('mob-open');
-  sb.classList.toggle('mob-open');
-  // Show/hide backdrop
-  let bd=document.getElementById('calBackdrop');
+  const panel=document.getElementById('mobCalPanel');
+  const backdrop=document.getElementById('mobCalBackdrop');
+  if(!panel)return;
+  const opening=panel.style.display==='none'||!panel.style.display;
   if(opening){
-    if(!bd){bd=document.createElement('div');bd.id='calBackdrop';bd.style.cssText='position:fixed;inset:0;z-index:299;background:rgba(0,0,0,0.3)';bd.onclick=toggleMobileCal;document.body.appendChild(bd);}
-    bd.style.display='block';
+    panel.style.display='block';
+    backdrop.style.display='block';
+    // Animate in
+    requestAnimationFrame(()=>{panel.style.transform='translateX(0)';});
+    // Render calendar in mobile panel
+    renderMobCal();
   } else {
-    if(bd)bd.style.display='none';
+    closeMobileCal();
+  }
+}
+function closeMobileCal(){
+  const panel=document.getElementById('mobCalPanel');
+  const backdrop=document.getElementById('mobCalBackdrop');
+  if(panel){panel.style.transform='translateX(100%)';setTimeout(()=>{panel.style.display='none';},280);}
+  if(backdrop)backdrop.style.display='none';
+}
+function renderMobCal(){
+  // Render calendar into the mobile panel
+  const ms=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const mye=document.getElementById('mobCalMY');
+  if(mye)mye.textContent=ms[S.calM]+' '+S.calY;
+  const c=document.getElementById('mobCalDays');
+  if(!c)return;
+  c.innerHTML='';
+  const rawFirst=new Date(S.calY,S.calM,1).getDay();
+  const first=(rawFirst+6)%7;
+  const days=new Date(S.calY,S.calM+1,0).getDate();
+  const today=todayKey();
+  const pd=planDays();
+  for(let i=0;i<first;i++){const el=document.createElement('div');el.className='cd empty';c.appendChild(el);}
+  for(let d=1;d<=days;d++){
+    const key=S.calY+'-'+pad(S.calM+1)+'-'+pad(d);
+    const el=document.createElement('div');el.className='cd';el.textContent=d;
+    if(key===today)el.classList.add('today');
+    if(S.je[key])el.classList.add('has-e');
+    if(pd.has(key))el.classList.add('has-p');
+    if(key===S.selDate)el.classList.add('sel');
+    el.onclick=()=>{selectDate(key);closeMobileCal();};
+    c.appendChild(el);
   }
 }
 // Close calendar when clicking outside on mobile
@@ -2185,7 +2217,7 @@ if(isUnlocked&&!wasLocked){
 </div>
 
 <!-- Mobile calendar toggle -->
-<button class="cal-mob-toggle" id="calMobToggle" onclick="toggleMobileCal()" title="Toggle calendar">📅</button>
+
 
 <div id="mob-nav">
   <button class="mob-nav-btn on" id="mn-j" onclick="switchTab('j')">
@@ -2211,5 +2243,31 @@ if(isUnlocked&&!wasLocked){
   </div>
 </div>
 </div>
+
+<!-- MOBILE CALENDAR PANEL - direct child of body, works with position:fixed on iOS -->
+<div id="mobCalPanel" style="display:none;position:fixed;top:0;right:0;bottom:0;width:min(300px,85vw);background:var(--su);border-left:1px solid var(--bdr2);z-index:2000;overflow-y:auto;box-shadow:-4px 0 24px rgba(0,0,0,0.25);transition:transform 0.28s ease;transform:translateX(100%)">
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:0.7rem 0.9rem;border-bottom:1px solid var(--bdr);background:var(--bg2)">
+    <span style="font-family:'Oranienbaum',serif;font-size:0.9rem;color:var(--ink);letter-spacing:1px">Calendar</span>
+    <button onclick="closeMobileCal()" style="background:transparent;border:none;color:var(--ink3);font-size:1.2rem;cursor:pointer;padding:0.2rem 0.4rem;border-radius:6px">✕</button>
+  </div>
+  <div style="padding:0.5rem 0.6rem">
+    <div class="cal-hd" style="padding:0.5rem 0.2rem 0.3rem">
+      <button class="cn" onclick="prevM()">‹</button>
+      <span class="cal-hd-t" id="mobCalMY"></span>
+      <button class="cn" onclick="nextM()">›</button>
+    </div>
+    <div class="cal-g">
+      <div class="cal-dh"><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span><span>Su</span></div>
+      <div class="cal-days" id="mobCalDays"></div>
+    </div>
+    <div class="cal-leg" style="margin-top:0.5rem">
+      <div class="cl-i"><div class="cl-d" style="background:var(--acc3)"></div> Entry</div>
+      <div class="cl-i"><div class="cl-d" style="border:2px solid var(--gold2);background:transparent"></div> Plan</div>
+    </div>
+  </div>
+  <!-- Swing illustration -->
+  
+</div>
+<div id="mobCalBackdrop" onclick="closeMobileCal()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:1999"></div>
 </body>
 </html>
