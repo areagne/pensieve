@@ -1289,7 +1289,7 @@ async function driveLoad(){
       const res=await gapi.client.drive.files.get({fileId:S.driveFileId,alt:'media'});
       const p=typeof res.result==='string'?JSON.parse(res.result):res.result;
       if(p.je)S.je=p.je;if(p.essays)S.essays=p.essays;if(p.jTags)S.jTags=p.jTags;if(p.pTags)S.pTags=p.pTags;if(p.plans)S.plans=p.plans;if(p.planCats)S.planCats=p.planCats;if(p.dreams)S.dreams=p.dreams;
-      document.getElementById('lkSync').textContent='Loaded ✦';setSS('ok','Synced');refreshAllViews();
+      document.getElementById('lkSync').textContent='Loaded ✦';setSS('ok','Synced');init();refreshAllViews();
     }else{document.getElementById('lkSync').textContent='Starting fresh ✦';setSS('ok','Ready');refreshAllViews()}
   }catch(e){document.getElementById('lkSync').textContent='Using local data.';setSS('er','Offline');loadBackup()}
   if(!S.jTags.length)S.jTags=defJT();if(!S.pTags.length)S.pTags=defPT();if(!S.planCats.length)S.planCats=[...DEF_CATS];
@@ -1318,12 +1318,25 @@ function unlock(){
   document.getElementById('lkErr').textContent='';
   sessionStorage.setItem('jnl_unlocked','1');
   sessionStorage.removeItem('jnl_locked');
-  loadBackup();
-  if(S.useGDrive&&tokenClient)tokenClient.requestAccessToken({prompt:''});
   document.getElementById('lkScr').style.display='none';
   document.getElementById('app').classList.add('on');
+  loadBackup();
   init();
+  if(S.useGDrive){
+    // Try to request token - if tokenClient ready do it now, else wait
+    const tryAuth=()=>{
+      if(tokenClient){
+        document.getElementById('lkSync').textContent='Connecting to Drive…';
+        tokenClient.requestAccessToken({prompt:''});
+      } else {
+        // gapi still loading - retry
+        setTimeout(tryAuth, 300);
+      }
+    };
+    tryAuth();
+  }
 }
+
 function lockApp(){
   sessionStorage.setItem('jnl_locked','1');
   sessionStorage.removeItem('jnl_unlocked');
