@@ -1208,7 +1208,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
     </div>
     <!-- Google Drive Setup -->
     <div class="gdrive-setup">
-      <h4 class="gdrive-title">☁ Google Drive Sync</h4>
+      <h4 class="gdrive-title" style="cursor:pointer" onclick="showDriveStatus()">☁ Google Drive Sync ↗</h4>
       <div id="gdriveStatus" class="gdrive-status"></div>
       <div class="gdrive-steps" id="gdriveSteps">
         <div class="gdrive-input-row">
@@ -1276,7 +1276,14 @@ function openThMod(){document.getElementById('thOv').classList.add('on')}
 function closeThMod(){document.getElementById('thOv').classList.remove('on')}
 
 // DRIVE
-function setSS(st,l){document.getElementById('sdot').className='sdot '+st;document.getElementById('slbl').textContent=l}
+function setSS(st,l){
+  const dot=document.getElementById('sdot');
+  const lbl=document.getElementById('slbl');
+  if(dot)dot.className='sdot '+st;
+  if(lbl)lbl.textContent=l;
+  // Also update mobile header if visible
+  console.log('[Drive]',st,l);
+}
 function initGapi(cid){gapi.load('client',async()=>{await gapi.client.init({discoveryDocs:['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest']});tokenClient=google.accounts.oauth2.initTokenClient({client_id:cid,scope:SCOPES,callback:resp=>{if(!resp.error){accessToken=resp.access_token;gapi.client.setToken({access_token:accessToken});driveLoad()}}})})}
 async function driveLoad(){
   if(!S.useGDrive||!accessToken){loadBackup();return}
@@ -2087,6 +2094,51 @@ function refreshAllViews(){
   }catch(ex){console.log('refreshAllViews error:',ex);}
 }
 
+
+function showDriveStatus(){
+  const body=document.getElementById('driveDbgBody');
+  if(!body)return;
+  const cid=localStorage.getItem('jnl_client_id')||'None';
+  const lines=[
+    '<b>Client ID:</b> '+(cid?cid.substring(0,30)+'…':'❌ Not set'),
+    '<b>Drive enabled:</b> '+(S.useGDrive?'✅ Yes':'❌ No'),
+    '<b>Access token:</b> '+(accessToken?'✅ Present':'❌ Missing - not authenticated'),
+    '<b>File ID:</b> '+(S.driveFileId||'None - file not yet created'),
+    '<b>Local entries:</b> '+Object.keys(S.je).length+' days',
+    '<b>Local tags:</b> '+S.jTags.length,
+    '<b>Last backup:</b> '+(()=>{try{const d=JSON.parse(localStorage.getItem("jnl_backup")||"{}");return d.savedAt||"Never";}catch(e){return "Error";}})(),
+  ];
+  body.innerHTML=lines.join('<br>');
+  document.getElementById('driveDbgOv').style.display='flex';
+}
+async function forceDriveSync(){
+  const body=document.getElementById('driveDbgBody');
+  if(!accessToken){
+    body.innerHTML='<span style="color:var(--rose)">❌ Not authenticated. Re-enter password to trigger OAuth.</span>';
+    return;
+  }
+  body.innerHTML='Saving…';
+  await driveSave();
+  body.innerHTML='<span style="color:var(--sage)">✅ Saved! Check your Google Drive for my_journal_pensieve.json</span>';
+}
+async function forceReload(){
+  const body=document.getElementById('driveDbgBody');
+  if(!accessToken){
+    body.innerHTML='<span style="color:var(--rose)">❌ Not authenticated.</span>';
+    return;
+  }
+  body.innerHTML='Loading from Drive…';
+  await driveLoad();
+  body.innerHTML='<span style="color:var(--sage)">✅ Reloaded from Drive.</span>';
+}
+// Make sync dot/slbl clickable to show status
+setTimeout(()=>{
+  const dot=document.getElementById('sdot');
+  const lbl=document.getElementById('slbl');
+  if(dot){dot.style.cursor='pointer';dot.onclick=showDriveStatus;}
+  if(lbl){lbl.style.cursor='pointer';lbl.onclick=showDriveStatus;}
+},1000);
+
 // ── STARTUP ──
 loadPrefs();
 const savedCid=localStorage.getItem('jnl_client_id');
@@ -2282,5 +2334,21 @@ if(isUnlocked&&!wasLocked){
   
 </div>
 <div id="mobCalBackdrop" onclick="closeMobileCal()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:1999"></div>
+
+<!-- DRIVE STATUS MODAL -->
+<div id="driveDbgOv" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:5000;align-items:center;justify-content:center" onclick="if(event.target===this)this.style.display='none'">
+  <div style="background:var(--su);border:1.5px solid var(--bdr2);border-radius:14px;padding:1.4rem;max-width:420px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,0.25)">
+    <div style="font-family:'Oranienbaum',serif;font-size:1.1rem;color:var(--ink);margin-bottom:1rem;display:flex;justify-content:space-between;align-items:center">
+      ☁ Drive Status
+      <button onclick="document.getElementById('driveDbgOv').style.display='none'" style="background:transparent;border:none;color:var(--ink4);cursor:pointer;font-size:1.1rem">✕</button>
+    </div>
+    <div id="driveDbgBody" style="font-family:'Vollkorn',serif;font-size:0.85rem;color:var(--ink3);line-height:1.8"></div>
+    <div style="display:flex;gap:0.5rem;margin-top:1rem;flex-wrap:wrap">
+      <button onclick="forceDriveSync()" style="background:var(--acc);color:#fff;border:none;padding:0.4rem 0.9rem;border-radius:8px;font-family:'Oranienbaum',serif;cursor:pointer">Force Save to Drive</button>
+      <button onclick="forceReload()" style="background:var(--bg2);color:var(--ink);border:1px solid var(--bdr);padding:0.4rem 0.9rem;border-radius:8px;font-family:'Oranienbaum',serif;cursor:pointer">Reload from Drive</button>
+      <button onclick="document.getElementById('driveDbgOv').style.display='none'" style="background:transparent;border:1px solid var(--bdr);color:var(--ink4);padding:0.4rem 0.9rem;border-radius:8px;font-family:'Oranienbaum',serif;cursor:pointer">Close</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
