@@ -967,6 +967,19 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
 }
 .jtag-sel:focus{border-color:var(--acc2);border-style:solid;color:var(--acc)}
 .jtag-sel:hover{border-color:var(--acc2);color:var(--acc)}
+
+/* ══ RICH TEXT TOOLBAR ══ */
+.rte-sel{border:1px solid var(--bdr);background:var(--bg2);color:var(--ink2);font-size:0.75rem;padding:0.18rem 0.3rem;border-radius:5px;cursor:pointer;outline:none;font-family:'Vollkorn',serif;transition:border-color 0.15s;max-width:110px;flex-shrink:0}
+.rte-sel:hover,.rte-sel:focus{border-color:var(--acc2)}
+.rte-size{max-width:70px}
+.rtb-color{display:flex;flex-direction:column;align-items:center;gap:0;font-size:0.85rem;font-weight:700;line-height:1;padding:0.2rem 0.38rem}
+/* Blockquote styling in editor */
+#jEd blockquote{border-left:3px solid var(--acc2);margin:0.5rem 0;padding:0.4rem 0.8rem;color:var(--ink3);font-style:italic}
+#jEd h1{font-family:'Oranienbaum',serif;font-size:1.8rem;color:var(--ink);margin:0.5rem 0 0.3rem;line-height:1.2}
+#jEd h2{font-family:'Oranienbaum',serif;font-size:1.4rem;color:var(--ink);margin:0.4rem 0 0.25rem;line-height:1.2}
+#jEd h3{font-family:'Oranienbaum',serif;font-size:1.15rem;color:var(--ink2);margin:0.3rem 0 0.2rem;line-height:1.3}
+#jEd mark{background:rgba(255,220,50,0.35);border-radius:2px;padding:0 2px}
+.dk #jEd mark{background:rgba(255,200,0,0.25)}
 </style>
 </head>
 <body class="tb">
@@ -1093,31 +1106,80 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
           <div class="jb th jb-main">
             <div class="jbt">🪶 Thoughts & Feelings</div>
             <div class="rte-tb" id="jToolbar">
-              <select class="rte-font" id="jFont" onchange="applyFont('jEd',this.value)">
+              <!-- Format / Paragraph style -->
+              <select class="rte-sel" id="jParaFmt" onchange="applyParaFmt(this.value)" title="Paragraph style">
+                <option value="p">Body text</option>
+                <option value="h1">Heading 1</option>
+                <option value="h2">Heading 2</option>
+                <option value="h3">Heading 3</option>
+                <option value="blockquote">Quote</option>
+              </select>
+              <span class="rtbSep"></span>
+              <!-- Font family -->
+              <select class="rte-sel" id="jFont" onchange="applyFont('jEd',this.value)" title="Font">
                 <option value="'Vollkorn',serif">Vollkorn</option>
                 <option value="'Oranienbaum',serif">Oranienbaum</option>
-                <option value="'Dancing Script',cursive">Script</option>
+                <option value="'Dancing Script',cursive">Handwriting</option>
+                <option value="'Playfair Display',serif">Playfair</option>
+                <option value="'Lora',serif">Lora</option>
+                <option value="'Merriweather',serif">Merriweather</option>
+                <option value="'Crimson Text',serif">Crimson</option>
+                <option value="'EB Garamond',serif">Garamond</option>
                 <option value="'Georgia',serif">Georgia</option>
                 <option value="monospace">Typewriter</option>
               </select>
               <span class="rtbSep"></span>
+              <!-- Font size -->
+              <select class="rte-sel rte-size" id="jFontSize" onchange="applyFontSize(this.value)" title="Size">
+                <option value="12">12</option>
+                <option value="14">14</option>
+                <option value="16" selected>16</option>
+                <option value="18">18</option>
+                <option value="20">20</option>
+                <option value="24">24</option>
+                <option value="28">28</option>
+                <option value="32">32</option>
+                <option value="36">36</option>
+              </select>
+              <span class="rtbSep"></span>
+              <!-- Basic formatting -->
               <button class="rtb" onclick="fmt('jEd','bold')" title="Bold"><b>B</b></button>
               <button class="rtb" onclick="fmt('jEd','italic')" title="Italic"><i>I</i></button>
               <button class="rtb" onclick="fmt('jEd','underline')" title="Underline"><u>U</u></button>
+              <button class="rtb" onclick="fmt('jEd','strikeThrough')" title="Strikethrough" style="text-decoration:line-through">S</button>
               <span class="rtbSep"></span>
-              <button class="rtb" onclick="fmt('jEd','insertUnorderedList')" title="Bullets">•≡</button>
-              <button class="rtb" onclick="fmt('jEd','insertOrderedList')" title="Numbered">1≡</button>
+              <!-- Text colour -->
+              <button class="rtb rtb-color" title="Text colour" onclick="openColorPicker('jEd')">A<span id="colorBar" style="display:block;height:3px;background:#444;margin-top:1px;border-radius:2px;width:14px"></span></button>
+              <!-- Highlight -->
+              <button class="rtb" title="Highlight" onclick="applyHighlight('jEd')">🖍</button>
               <span class="rtbSep"></span>
+              <!-- Lists -->
+              <button class="rtb" onclick="fmt('jEd','insertUnorderedList')" title="Bullet list">•≡</button>
+              <button class="rtb" onclick="fmt('jEd','insertOrderedList')" title="Numbered list">1≡</button>
+              <span class="rtbSep"></span>
+              <!-- Indent -->
               <button class="rtb" onclick="fmt('jEd','outdent')" title="Outdent">⇤</button>
               <button class="rtb" onclick="fmt('jEd','indent')" title="Indent">⇥</button>
               <span class="rtbSep"></span>
+              <!-- Align -->
               <button class="rtb" onclick="fmt('jEd','justifyLeft')" title="Left">⬅</button>
-              <button class="rtb" onclick="fmt('jEd','justifyCenter')" title="Center">↔</button>
+              <button class="rtb" onclick="fmt('jEd','justifyCenter')" title="Centre">↔</button>
               <button class="rtb" onclick="fmt('jEd','justifyRight')" title="Right">➡</button>
               <span class="rtbSep"></span>
+              <!-- Line spacing -->
+              <select class="rte-sel rte-size" id="jLineHeight" onchange="applyLineHeight(this.value)" title="Line spacing">
+                <option value="1.4">Compact</option>
+                <option value="1.65" selected>Normal</option>
+                <option value="2">Relaxed</option>
+                <option value="2.5">Loose</option>
+              </select>
+              <span class="rtbSep"></span>
+              <!-- Settings gear -->
               <button class="rtb" onclick="openJQuickPanel()" title="Mood · Weather · Day type">⚙</button>
             </div>
-            <div class="rteEd" id="jEd" contenteditable="true" placeholder="What is on your mind today? Pour it all out here, without reservation…" oninput="updateWC()" style="min-height:300px;line-height:1.65"></div>
+            <!-- Hidden colour input -->
+            <input type="color" id="colorPickerInput" style="display:none;position:absolute" value="#444444" onchange="applyTextColor('jEd',this.value)">
+            <div class="rteEd" id="jEd" contenteditable="true" placeholder="What is on your mind today? Pour it all out here, without reservation…" oninput="updateWC();scheduleLocalSave()" style="min-height:300px;line-height:1.65"></div>
             <div class="wcrow"><span class="wct" id="wcT">0 words</span><span class="wct" id="tsT"></span></div>
             <button class="savBtn" onclick="saveJournal()">Save Today's Entry ✦</button>
             <div class="savNote" id="savNote"></div>
@@ -1394,112 +1456,85 @@ async function driveLoad(){
   if(!S.jTags.length)S.jTags=defJT();if(!S.pTags.length)S.pTags=defPT();if(!S.planCats.length)S.planCats=[...DEF_CATS];
 }
 async function driveSave(){
-  const pl=JSON.stringify({je:S.je,essays:S.essays,jTags:S.jTags,pTags:S.pTags,plans:S.plans,planCats:S.planCats,dreams:S.dreams||[],savedAt:new Date().toISOString()});
-  localStorage.setItem('jnl_backup',JSON.stringify({je:S.je,essays:S.essays,jTags:S.jTags,pTags:S.pTags,plans:S.plans,planCats:S.planCats,dreams:S.dreams||[],driveFileId:S.driveFileId}));
-  if(!S.useGDrive||!accessToken){setSS('ok','Saved locally');return}
-  setSS('sy','Saving…');
+  // 1. Always save locally first (3 copies for redundancy)
+  const payload=JSON.stringify({je:S.je,essays:S.essays,jTags:S.jTags,pTags:S.pTags,plans:S.plans,planCats:S.planCats,dreams:S.dreams||[],driveFileId:S.driveFileId,savedAt:new Date().toISOString()});
   try{
-    if(S.driveFileId){await gapi.client.request({path:`/upload/drive/v3/files/${S.driveFileId}`,method:'PATCH',params:{uploadType:'media'},headers:{'Content-Type':'application/json'},body:pl})}
-    else{const m=await gapi.client.drive.files.create({resource:{name:GF,mimeType:'application/json'},fields:'id'});S.driveFileId=m.result.id;await gapi.client.request({path:`/upload/drive/v3/files/${S.driveFileId}`,method:'PATCH',params:{uploadType:'media'},headers:{'Content-Type':'application/json'},body:pl})}
-    setSS('ok','Saved ✦');setTimeout(()=>setSS('ok','Synced'),3000);
-  }catch(e){setSS('er','Sync failed')}
-}
-function loadBackup(){try{const d=JSON.parse(localStorage.getItem('jnl_backup')||'{}');if(d.je)S.je=d.je;if(d.essays)S.essays=d.essays;if(d.jTags)S.jTags=d.jTags;if(d.pTags)S.pTags=d.pTags;if(d.plans)S.plans=d.plans;if(d.planCats)S.planCats=d.planCats;if(d.dreams)S.dreams=d.dreams;if(d.driveFileId)S.driveFileId=d.driveFileId}catch(e){}if(!S.jTags.length)S.jTags=defJT();if(!S.pTags.length)S.pTags=defPT();if(!S.planCats.length)S.planCats=[...DEF_CATS]}
-function defJT(){return [{id:'t1',name:'Reading',color:'#4a6741'},{id:'t2',name:'Walking',color:'#2a4a7a'},{id:'t3',name:'Cooking',color:'#8b6914'},{id:'t4',name:'Friends',color:'#c4687a'},{id:'t5',name:'Music',color:'#7a4a8b'}]}
-function defPT(){return [{id:'p1',name:'Philosophy',color:'#4a4a8b'},{id:'p2',name:'Personal',color:'#c4687a'},{id:'p3',name:'Creative',color:'#8b6914'}]}
+    const prev=localStorage.getItem('jnl_backup');
+    if(prev&&prev!=='{}')localStorage.setItem('jnl_backup_prev',prev);
+    localStorage.setItem('jnl_backup',payload);
+    localStorage.setItem('jnl_backup_2',payload);
+  }catch(e){console.warn('localStorage save issue:',e);}
 
-// LOCK / UNLOCK
-function unlock(){
-  if(document.getElementById('pwIn').value!==PW){
-    document.getElementById('lkErr').textContent='This is not the right key, dear.';
-    document.getElementById('pwIn').value='';return;
-  }
-  document.getElementById('lkErr').textContent='';
-  sessionStorage.setItem('jnl_unlocked','1');
-  sessionStorage.removeItem('jnl_locked');
-  document.getElementById('lkScr').style.display='none';
-  document.getElementById('app').classList.add('on');
-  loadBackup();
-  init();
-  if(S.useGDrive){
-    // Try to request token - if tokenClient ready do it now, else wait
-    const tryAuth=()=>{
-      if(tokenClient){
-        // Check if we have a valid cached token
-        const cachedToken=sessionStorage.getItem('jnl_token');
-        const cachedExp=parseInt(sessionStorage.getItem('jnl_token_exp')||'0');
-        if(cachedToken&&Date.now()<cachedExp){
-          // Token still valid - use it silently
-          accessToken=cachedToken;
-          gapi.client.setToken({access_token:cachedToken});
-          driveLoad();
-          return;
-        }
-        // Token expired or missing - silent re-auth first (no popup if already consented)
-        document.getElementById('lkSync')&&(document.getElementById('lkSync').textContent='Connecting…');
-        tokenClient.requestAccessToken({prompt:''});
-      } else {
-        setTimeout(tryAuth, 300);
+  // 2. Save to Drive with retry
+  if(!S.useGDrive||!accessToken){setSS('ok','Saved locally');return;}
+  setSS('sy','Saving…');
+  const pl=JSON.stringify({je:S.je,essays:S.essays,jTags:S.jTags,pTags:S.pTags,plans:S.plans,planCats:S.planCats,dreams:S.dreams||[],savedAt:new Date().toISOString()});
+  
+  async function tryDrive(attempt){
+    try{
+      if(S.driveFileId){
+        await gapi.client.request({path:`/upload/drive/v3/files/${S.driveFileId}`,method:'PATCH',params:{uploadType:'media'},headers:{'Content-Type':'application/json'},body:pl});
+      }else{
+        const m=await gapi.client.drive.files.create({resource:{name:GF,mimeType:'application/json'},fields:'id'});
+        S.driveFileId=m.result.id;
+        await gapi.client.request({path:`/upload/drive/v3/files/${S.driveFileId}`,method:'PATCH',params:{uploadType:'media'},headers:{'Content-Type':'application/json'},body:pl});
       }
-    };
-    tryAuth();
+      return true;
+    }catch(e){
+      if(attempt<3){await new Promise(r=>setTimeout(r,1200*attempt));return tryDrive(attempt+1);}
+      return false;
+    }
   }
+  
+  const ok=await tryDrive(1);
+  if(ok){setSS('ok','Synced ✦');setTimeout(()=>setSS('ok','Synced'),3000);}
+  else{setSS('er','Drive failed — data saved locally');if(tokenClient)tokenClient.requestAccessToken({prompt:''});}
 }
 
-function lockApp(){
-  sessionStorage.setItem('jnl_locked','1');
-  sessionStorage.removeItem('jnl_unlocked');
-  document.getElementById('app').classList.remove('on');
-  document.getElementById('pnV').classList.remove('on');
-  document.getElementById('lkScr').style.display='flex';
-  document.getElementById('pwIn').value='';
-  document.getElementById('lkErr').textContent='';
-  stopAmb();
+// Auto-save to localStorage every 2s after typing (no Drive call, just local)
+let _lsTimer=null;
+function scheduleLocalSave(){
+  if(_lsTimer)clearTimeout(_lsTimer);
+  _lsTimer=setTimeout(()=>{
+    const ed=document.getElementById('jEd');
+    if(ed&&S.selDate){
+      S.je[S.selDate]={...(S.je[S.selDate]||{}),thoughts:ed.innerHTML,mood:S.mood,dayType:S.dayType,tags:[...S.selJT],weather:S.weather,wxIcon:S.wxIcon};
+      const p=JSON.stringify({je:S.je,essays:S.essays,jTags:S.jTags,pTags:S.pTags,plans:S.plans,planCats:S.planCats,dreams:S.dreams||[],driveFileId:S.driveFileId,savedAt:new Date().toISOString()});
+      try{localStorage.setItem('jnl_backup',p);localStorage.setItem('jnl_backup_2',p);}catch(e){}
+    }
+  },2000);
 }
 
-// INIT
-function init(){setRandomQuote();
-  S.selDate=todayKey();
-S.timeRange=30;
-if(!S.dreams)S.dreams=[];
-S._curDream=null;
-S._pendingCatIcon='📌';S.wxCity="London";
-  setupDH(S.selDate);renderCal();loadJE(S.selDate);renderJT();buildWxScale();fetchWx();updateStats();
-  setInterval(()=>{const el=document.getElementById('tsT');if(el)el.textContent=new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})},60000);
-  const el=document.getElementById('tsT');if(el)el.textContent=new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+// Auto-save to Drive every 90s if data changed
+let _autoSaveTimer=null,_lastHash='';
+function startAutoSave(){
+  if(_autoSaveTimer)clearInterval(_autoSaveTimer);
+  _autoSaveTimer=setInterval(async()=>{
+    const h=Object.keys(S.je).length+'_'+(S.essays||[]).length+'_'+(S.plans||[]).length;
+    if(h!==_lastHash){_lastHash=h;await driveSave();}
+  },90000);
 }
-function setupDH(k){const d=new Date(k+'T12:00:00');document.getElementById('jdhN').textContent=d.getDate();document.getElementById('jdhW').textContent=d.toLocaleDateString('en-GB',{weekday:'long'});document.getElementById('jdhM').textContent=d.toLocaleDateString('en-GB',{month:'long',year:'numeric'})}
 
-// WEATHER
-function buildWxScale(){const c=document.getElementById('wxScale');if(!c)return;c.innerHTML='';WXO.forEach(([ic,lbl])=>{const b=document.createElement('button');b.className='wxb'+(ic===S.wxIcon?' on':'');b.innerHTML=`<span class="we">${ic}</span><span class="wl">${lbl}</span>`;b.onclick=()=>{S.wxIcon=ic;document.querySelectorAll('.wxb').forEach(x=>x.classList.remove('on'));b.classList.add('on')};c.appendChild(b)})}
-function fetchWx(){const city=(document.getElementById('manCity')?.value||S.wxCity||'London').trim()||'London';document.getElementById('manCity').value=city;fetchWxForCity(city)}
-function fetchWxForCity(city){fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1`).then(r=>r.json()).then(g=>{if(!g.results?.length){document.getElementById('wxDisp').innerHTML='<span style="color:var(--ink4);font-style:italic">City not found.</span>';return}const{latitude:la,longitude:lo}=g.results[0];fetch(`https://api.open-meteo.com/v1/forecast?latitude=${la}&longitude=${lo}&current_weather=true`).then(r=>r.json()).then(d=>{const ic=WI[d.current_weather.weathercode]||'🌤️';if(S.wxIcon==='🌤️')S.wxIcon=ic;showWx(d.current_weather.temperature,d.current_weather.windspeed,d.current_weather.weathercode,city);buildWxScale()}).catch(()=>document.getElementById('wxDisp').innerHTML='<span style="color:var(--ink4);font-style:italic">Could not load weather.</span>')}).catch(()=>{})}
-function showWx(t,w,c,city){S.weather={t,w,c,city};setTimeout(renderDayStrip,100);const el=document.getElementById('wxDisp');if(el)el.innerHTML=`<div class="wx-main"><div class="wx-big">${S.wxIcon}</div><div><div class="wx-temp">${Math.round(t)}°C</div><div class="wx-desc">${WD[c]||'Variable'}</div><div class="wx-city">${city} · ${Math.round(w)} km/h</div></div></div>`}
-// showWxMan removed - always show city input
-function fetchWxCity(){const city=(document.getElementById('manCity')?.value||'London').trim();if(city)fetchWxForCity(city)}
+// Save when switching away from app
+document.addEventListener('visibilitychange',()=>{
+  if(document.hidden){
+    const ed=document.getElementById('jEd');
+    if(ed&&S.selDate)S.je[S.selDate]={...(S.je[S.selDate]||{}),thoughts:ed.innerHTML,mood:S.mood,dayType:S.dayType,tags:[...S.selJT]};
+    const p=JSON.stringify({je:S.je,essays:S.essays,jTags:S.jTags,pTags:S.pTags,plans:S.plans,planCats:S.planCats,dreams:S.dreams||[],driveFileId:S.driveFileId,savedAt:new Date().toISOString()});
+    try{localStorage.setItem('jnl_backup',p);localStorage.setItem('jnl_backup_2',p);}catch(e){}
+    if(S.useGDrive&&accessToken)driveSave().catch(()=>{});
+  }
+});
 
-// MOOD / DT / FONT
-function setMood(n){S.mood=n;for(let i=1;i<=5;i++){const b=document.getElementById('m'+i);b.classList.toggle('on',i===n);b.style.borderColor=i===n?MC[n-1]:'';b.style.background=i===n?MC[n-1]+'22':''}}
-function setDT(t){S.dayType=t;['W','O','H'].forEach((x,i)=>document.getElementById('dt'+x).classList.toggle('on',['work','off','holiday'][i]===t))}
-function fmt(id,cmd){const ed=document.getElementById(id);if(ed){ed.focus();document.execCommand(cmd,false,null)}}
-function applyFont(id,font){const ed=document.getElementById(id);if(ed)ed.style.fontFamily=font}
-function updateWC(){const ed=document.getElementById('jEd');const el=document.getElementById('wcT');if(ed&&el)el.textContent=wc(ed)+' words'}
-function updateEmWC(){const ed=document.getElementById('emBody');const el=document.getElementById('emWC');if(ed&&el)el.textContent=wc(ed)+' words'}
+// Save on page close
+window.addEventListener('beforeunload',()=>{
+  const ed=document.getElementById('jEd');
+  if(ed&&S.selDate)S.je[S.selDate]={...(S.je[S.selDate]||{}),thoughts:ed.innerHTML};
+  const p=JSON.stringify({je:S.je,essays:S.essays,jTags:S.jTags,pTags:S.pTags,plans:S.plans,planCats:S.planCats,dreams:S.dreams||[],driveFileId:S.driveFileId,savedAt:new Date().toISOString()});
+  try{localStorage.setItem('jnl_backup',p);localStorage.setItem('jnl_backup_2',p);}catch(e){}
+});
 
-// JOURNAL TAGS
-function renderJT(){const c=document.getElementById('jTrow');if(!c)return;c.innerHTML='';S.selJT.forEach(id=>{const t=S.jTags.find(x=>x.id===id);if(!t)return;const el=document.createElement('span');el.className='tag sel';el.textContent=t.name;el.style.background=t.color+'33';el.style.color=t.color;el.onclick=()=>{S.selJT=S.selJT.filter(x=>x!==id);renderJT()};c.appendChild(el)});const sel=document.getElementById('jTsel');if(!sel)return;sel.innerHTML='<option value="">Add activity tag…</option>';S.jTags.filter(t=>!S.selJT.includes(t.id)).forEach(t=>{const o=document.createElement('option');o.value=t.id;o.textContent=t.name;sel.appendChild(o)})}
-function selTag(target){
-  if(target==='j'){const v=document.getElementById('jTsel').value;if(v&&!S.selJT.includes(v)){S.selJT.push(v);renderJT()}document.getElementById('jTsel').value=''}
-  else if(target==='pn'){const v=document.getElementById('emTsel').value;if(v&&!S.selPT.includes(v)){S.selPT.push(v);renderEmTags()}document.getElementById('emTsel').value=''}
-  else if(target==='pl'){const sel=document.getElementById('pmTsel');if(!sel)return;const v=sel.value;if(v&&!S.selPlT.includes(v)){S.selPlT.push(v);renderPlTags()}sel.value=''}
-}
-function renderEmTags(){const c=document.getElementById('emTagRow');if(!c)return;[...c.querySelectorAll('.tag')].forEach(e=>e.remove());S.selPT.forEach(id=>{const t=S.pTags.find(x=>x.id===id);if(!t)return;const el=document.createElement('span');el.className='tag sel';el.textContent=t.name;el.style.background=t.color+'33';el.style.color=t.color;el.onclick=()=>{S.selPT=S.selPT.filter(x=>x!==id);renderEmTags()};c.insertBefore(el,c.firstChild)});const sel=document.getElementById('emTsel');if(!sel)return;sel.innerHTML='<option value="">Add tag…</option>';S.pTags.filter(t=>!S.selPT.includes(t.id)).forEach(t=>{const o=document.createElement('option');o.value=t.id;o.textContent=t.name;sel.appendChild(o)})}
-function renderPlTags(){const c=document.getElementById('plTrow');if(!c)return;c.innerHTML='';S.selPlT.forEach(id=>{const t=S.jTags.find(x=>x.id===id);if(!t)return;const el=document.createElement('span');el.className='tag sel';el.textContent=t.name;el.style.background=t.color+'33';el.style.color=t.color;el.onclick=()=>{S.selPlT=S.selPlT.filter(x=>x!==id);renderPlTags()};c.appendChild(el)});const sel=document.getElementById('pmTsel');if(!sel)return;sel.innerHTML='<option value="">Add tag…</option>';S.jTags.filter(t=>!S.selPlT.includes(t.id)).forEach(t=>{const o=document.createElement('option');o.value=t.id;o.textContent=t.name;sel.appendChild(o)})}
 
-// LINKED PLANS
-function renderLinkedPlans(key){const c=document.getElementById('linkedPlans');if(!c)return;c.innerHTML='';const linked=S.plans.filter(p=>dateInRange(key,p.start,p.end));linked.forEach(p=>{const cat=S.planCats.find(x=>x.id===p.catId)||{icon:'📅',name:'Plan',color:'#888'};const el=document.createElement('div');el.className='lpc';const endTxt=p.end&&p.end!==p.start?` → ${fmtDate(p.end)}`:'';el.innerHTML=`<div class="lpc-ico">${cat.icon}</div><div><div class="lpc-cat">${cat.name}</div><div class="lpc-title">${p.title}</div><div class="lpc-dates">${fmtDate(p.start)}${endTxt}</div></div><div class="lpc-arr">→</div>`;el.onclick=()=>openPlDetail(p.id);c.appendChild(el)})}
-
-// JOURNAL SAVE / LOAD
 async function saveJournal(){const ed=document.getElementById('jEd');if(!ed)return;S.je[S.selDate]={mood:S.mood,dayType:S.dayType,tags:[...S.selJT],thoughts:ed.innerHTML,weather:S.weather,wxIcon:S.wxIcon,savedAt:new Date().toISOString()};renderCal();updateStats();const n=document.getElementById('savNote');if(n)n.textContent='✦ Saving to Drive…';await driveSave();if(n){n.textContent='✦ Entry saved beautifully.';setTimeout(()=>n.textContent='',4000)}}
 function loadJE(key){const e=S.je[key];S.mood=null;S.dayType=null;S.selJT=[];for(let i=1;i<=5;i++){const b=document.getElementById('m'+i);if(b){b.classList.remove('on');b.style.borderColor='';b.style.background=''}}['W','O','H'].forEach(x=>{const b=document.getElementById('dt'+x);if(b)b.classList.remove('on')});const ed=document.getElementById('jEd');if(ed)ed.innerHTML='';if(e){if(e.mood)setMood(e.mood);if(e.dayType)setDT(e.dayType);S.selJT=e.tags||[];if(ed)ed.innerHTML=e.thoughts||'';if(e.wxIcon){S.wxIcon=e.wxIcon;buildWxScale()}}renderJT();updateWC();renderLinkedPlans(key);renderLinkedDreams(key);renderDayStrip();}
 
@@ -2253,6 +2288,61 @@ function setDreamFilter(v){
   if(el){el.classList.add('on');el.style.background='var(--acc)';}
   renderDreams();
 }
+
+
+function applyParaFmt(tag){
+  document.getElementById('jEd').focus();
+  if(tag==='blockquote'){
+    document.execCommand('formatBlock',false,'blockquote');
+  } else {
+    document.execCommand('formatBlock',false,tag);
+  }
+  // Reset select to show current format
+  setTimeout(()=>updateParaFmtSelect(),50);
+}
+function applyFontSize(size){
+  document.getElementById('jEd').focus();
+  // execCommand fontSize only supports 1-7, so use a span instead
+  const sel=window.getSelection();
+  if(sel&&sel.rangeCount>0&&!sel.isCollapsed){
+    document.execCommand('fontSize',false,'4');
+    // Override the font element with our size
+    const fEls=document.getElementById('jEd').querySelectorAll('font[size]');
+    fEls.forEach(el=>{el.removeAttribute('size');el.style.fontSize=size+'px';});
+  }
+}
+function applyLineHeight(lh){
+  document.getElementById('jEd').style.lineHeight=lh;
+}
+function openColorPicker(id){
+  const inp=document.getElementById('colorPickerInput');
+  if(!inp)return;
+  const btn=document.querySelector('.rtb-color');
+  if(btn){const r=btn.getBoundingClientRect();inp.style.top=(r.bottom+4)+'px';inp.style.left=r.left+'px';}
+  inp.click();
+}
+function applyTextColor(id,color){
+  document.getElementById(id).focus();
+  document.execCommand('foreColor',false,color);
+  const bar=document.getElementById('colorBar');
+  if(bar)bar.style.background=color;
+}
+function applyHighlight(id){
+  document.getElementById(id).focus();
+  document.execCommand('hiliteColor',false,'rgba(255,220,50,0.4)');
+}
+function updateParaFmtSelect(){
+  const sel=document.getElementById('jParaFmt');
+  if(!sel)return;
+  const block=document.queryCommandValue('formatBlock').toLowerCase();
+  const map={'h1':'h1','h2':'h2','h3':'h3','blockquote':'blockquote'};
+  sel.value=map[block]||'p';
+}
+// Update format select when cursor moves in editor
+document.addEventListener('selectionchange',()=>{
+  const active=document.activeElement;
+  if(active&&active.id==='jEd')updateParaFmtSelect();
+});
 
 // ── STARTUP ──
 loadPrefs();
