@@ -1847,11 +1847,6 @@ function closeJQuickPanel(){
   renderDayStrip();
 }
 
-// Override setMood and setDT to also update strip
-const _origSetMood=setMood;
-setMood=function(n){_origSetMood(n);renderDayStrip()};
-const _origSetDT=setDT;
-setDT=function(t){_origSetDT(t);renderDayStrip()};
 
 
 
@@ -1998,6 +1993,12 @@ document.addEventListener('click',function(e){
 });
 // Update viewport height for mobile browsers (address bar)
 // setVH removed - using CSS padding-bottom instead
+
+// Override setMood/setDT after they are defined
+const _origSetMood=setMood;
+setMood=function(n){_origSetMood(n);renderDayStrip&&renderDayStrip();};
+const _origSetDT=setDT;
+setDT=function(t){_origSetDT(t);renderDayStrip&&renderDayStrip();};
 
 
 // ── CUSTOM DATE PICKER ──
@@ -2343,6 +2344,9 @@ document.addEventListener('selectionchange',()=>{
   const active=document.activeElement;
   if(active&&active.id==='jEd')updateParaFmtSelect();
 });
+
+function setMood(n){S.mood=n;for(let i=1;i<=5;i++){const b=document.getElementById('m'+i);if(b){b.classList.toggle('on',i===n);b.style.borderColor=i===n?['','#b04a6a','#b07a20','#4a7a5a','#2a5a9a','#7a4abf'][n]:'';b.style.background=i===n?['','#b04a6a22','#b07a2022','#4a7a5a22','#2a5a9a22','#7a4abf22'][n]:''}}}
+function setDT(t){S.dayType=t;['W','O','H'].forEach((x,i)=>{const b=document.getElementById('dt'+x);if(b)b.classList.toggle('on',['work','off','holiday'][i]===t)})}
 
 // ── STARTUP ──
 loadPrefs();
