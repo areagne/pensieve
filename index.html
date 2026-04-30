@@ -1450,7 +1450,10 @@ async function driveLoad(){
       const res=await gapi.client.drive.files.get({fileId:S.driveFileId,alt:'media'});
       const p=typeof res.result==='string'?JSON.parse(res.result):res.result;
       if(p.je)S.je=p.je;if(p.essays)S.essays=p.essays;if(p.jTags)S.jTags=p.jTags;if(p.pTags)S.pTags=p.pTags;if(p.plans)S.plans=p.plans;if(p.planCats)S.planCats=p.planCats;if(p.dreams)S.dreams=p.dreams;
-      document.getElementById('lkSync').textContent='Loaded ✦';setSS('ok','Synced');init();refreshAllViews();
+      document.getElementById('lkSync').textContent='Loaded ✦';setSS('ok','Synced');
+      // Update localStorage with Drive data for offline fallback
+      try{localStorage.setItem('jnl_backup',JSON.stringify({je:S.je,essays:S.essays,jTags:S.jTags,pTags:S.pTags,plans:S.plans,planCats:S.planCats,dreams:S.dreams||[],driveFileId:S.driveFileId,savedAt:new Date().toISOString()}));localStorage.setItem('jnl_backup_2',localStorage.getItem('jnl_backup'));}catch(e){}
+      init();refreshAllViews();
     }else{document.getElementById('lkSync').textContent='Starting fresh ✦';setSS('ok','Ready');refreshAllViews()}
   }catch(e){document.getElementById('lkSync').textContent='Using local data.';setSS('er','Offline');loadBackup()}
   if(!S.jTags.length)S.jTags=defJT();if(!S.pTags.length)S.pTags=defPT();if(!S.planCats.length)S.planCats=[...DEF_CATS];
@@ -2457,7 +2460,26 @@ if(isUnlocked&&!wasLocked){
   loadBackup();
   document.getElementById('lkScr').style.display='none';
   document.getElementById('app').classList.add('on');
-  setTimeout(init,50);
+  if(savedCid){
+    // Drive connected - wait for auth then load
+    var _initWait=setInterval(function(){
+      if(tokenClient){
+        clearInterval(_initWait);
+        var ct=sessionStorage.getItem('jnl_token');
+        var ce=parseInt(sessionStorage.getItem('jnl_token_exp')||'0');
+        if(ct&&Date.now()<ce){
+          accessToken=ct;gapi.client.setToken({access_token:ct});
+          driveLoad(); // driveLoad calls init() when done
+        }else{
+          tokenClient.requestAccessToken({prompt:''});
+          setTimeout(init,300); // init with local data while Drive loads
+        }
+      }
+    },200);
+    setTimeout(function(){clearInterval(_initWait);if(!accessToken)init()},4000); // fallback
+  }else{
+    setTimeout(init,50);
+  }
 }else{
   document.getElementById('lkScr').style.display='flex';
 }
