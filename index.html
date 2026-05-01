@@ -2448,6 +2448,24 @@ function renderPlTags(){
   S.jTags.filter(function(t){return!S.selPlT.includes(t.id)}).forEach(function(t){var o=document.createElement('option');o.value=t.id;o.textContent=t.name;sel.appendChild(o)});
 }
 
+function selTag(target){
+  if(target==='j'){
+    var sel=document.getElementById('jTsel');
+    if(!sel)return;
+    var v=sel.value;
+    if(v&&!S.selJT.includes(v)){S.selJT.push(v);}
+    sel.value=''; // reset immediately
+    renderJT();   // repopulate without selected tag
+  }else if(target==='pn'){
+    var sel2=document.getElementById('emTsel');if(!sel2)return;
+    var v2=sel2.value;if(v2&&!S.selPT.includes(v2)){S.selPT.push(v2);}
+    sel2.value='';if(typeof renderEmTags==='function')renderEmTags();
+  }else if(target==='pl'){
+    var sel3=document.getElementById('pmTsel');if(!sel3)return;
+    var v3=sel3.value;if(v3&&!S.selPlT.includes(v3)){S.selPlT.push(v3);}
+    sel3.value='';if(typeof renderPlTags==='function')renderPlTags();
+  }
+}
 // ── STARTUP ──
 loadPrefs();
 const savedCid=localStorage.getItem('jnl_client_id');
